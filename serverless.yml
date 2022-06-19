@@ -1,0 +1,36 @@
+plugins:
+  - serverless-offline
+
+service: image-processor
+frameworkVersion: '2||3'
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: python3.8
+  region: eu-west-1
+  lambdaHashingVersion: 20201221
+  environment:
+    CORNER_RADIUS: ${env:CORNER_RADIUS}
+    ICON_SIZE: ${env:ICON_SIZE}
+    IMAGE_SIZE: ${env:IMAGE_SIZE}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - 's3:GetObject'
+            - 's3:PutObject'
+          Resource:
+            - 'arn:aws:s3:::north-pole-thumbnails/*'
+            - 'arn:aws:s3:::north-pole-original-images/*'
+            - 'arn:aws:s3:::north-pole-images/*'
+functions:
+  image_processor:
+    handler: handler.on_image_update
+    timeout: 10
+    events:
+      - s3:
+          bucket: north-pole-original-images
+          event: s3:ObjectCreated:*
+          existing: true

@@ -1,0 +1,1 @@
+serverless invoke local --function image_processor --data '{"Records":[{"bucket":{"name":"north-pole-original-images"},"object":{"key":"3/default.png"}}]}'
