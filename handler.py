@@ -64,24 +64,27 @@ def upload_image(im, bucket, key, fmt):
 def on_image_update(event, context):
     try:
         if not event:
-            event = {"Records": [{"s3": {"bucket": {"name": "north-pole-original-images"}, "object": {"key": "3/default.png"}}}]}
+            event = {"Records": [{"s3": {"bucket": {"name": "north-pole-original-images"}, "object": {"key": "6/default.png"}}}]}
         print(event)
         bucket = event['Records'][0]['s3']['bucket']['name']
         key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'], encoding='utf-8')
-
+        print(bucket)
+        print(key)
         with Image.open(get_s3_filestream(bucket, key)) as im:
             im1 = crop_to_square(im)
 
             image = resize(im1, int(os.environ['IMAGE_SIZE']))
-            image.show()
+            # image.show()
             pre, ext = os.path.splitext(key)
 
             thumbnail = resize(im1, int(os.environ['ICON_SIZE']))
             thumbnail = add_corners(thumbnail, int(os.environ['CORNER_RADIUS']))
-            thumbnail.show()
+            # thumbnail.show()
             upload_image(thumbnail, os.environ['THUMBNAILS_BUCKET'], pre + '.png', 'png')
             upload_image(image, os.environ['OUTPUT_BUCKET'], pre + '.jpg', 'JPEG')
     except Exception as e:
+        print("exception")
+        print(e)
         return {
             "body": str(e),
             "statusCode": 500
@@ -91,7 +94,7 @@ def on_image_update(event, context):
         "message": "ok",
         "input": event
     }
-
+    print("ok")
     response = {
         "statusCode": 200,
         "body": json.dumps(body)

@@ -1,9 +1,20 @@
 plugins:
   - serverless-offline
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    slim: true
+    layer: true
+    dockerizePip: true
 
 service: image-processor
 frameworkVersion: '2||3'
 useDotenv: true
+
+package:
+  patterns:
+    - '!scripts/**'
 
 provider:
   name: aws
@@ -14,6 +25,8 @@ provider:
     CORNER_RADIUS: ${env:CORNER_RADIUS}
     ICON_SIZE: ${env:ICON_SIZE}
     IMAGE_SIZE: ${env:IMAGE_SIZE}
+    OUTPUT_BUCKET: ${env:OUTPUT_BUCKET}
+    THUMBNAILS_BUCKET: ${env:THUMBNAILS_BUCKET}
   iam:
     role:
       statements:
@@ -28,7 +41,10 @@ provider:
 functions:
   image_processor:
     handler: handler.on_image_update
-    timeout: 10
+    timeout: 30
+    memorySize: 256
+    layers:
+      - arn:aws:lambda:${self:provider.region}:770693421928:layer:Klayers-p38-Pillow:3
     events:
       - s3:
           bucket: north-pole-original-images
