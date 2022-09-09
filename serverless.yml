@@ -27,6 +27,7 @@ provider:
     IMAGE_SIZE: ${env:IMAGE_SIZE}
     OUTPUT_BUCKET: ${env:OUTPUT_BUCKET}
     THUMBNAILS_BUCKET: ${env:THUMBNAILS_BUCKET}
+    ORIGINALS_BUCKET: ${env:ORIGINALS_BUCKET}
   iam:
     role:
       statements:
@@ -34,13 +35,15 @@ provider:
           Action:
             - 's3:GetObject'
             - 's3:PutObject'
+            - 's3:DeleteObject'
+            - 's3:ListBucket'
           Resource:
             - 'arn:aws:s3:::north-pole-thumbnails/*'
             - 'arn:aws:s3:::north-pole-original-images/*'
             - 'arn:aws:s3:::north-pole-images/*'
 functions:
   image_processor:
-    handler: handler.on_image_update
+    handler: on_image_update.on_image_update
     timeout: 30
     memorySize: 256
     layers:
@@ -50,3 +53,7 @@ functions:
           bucket: north-pole-original-images
           event: s3:ObjectCreated:*
           existing: true
+  item_cleaner:
+    handler: on_item_delete.on_item_delete
+    timeout: 30
+    memorySize: 256
