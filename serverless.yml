@@ -28,6 +28,7 @@ provider:
     OUTPUT_BUCKET: ${env:OUTPUT_BUCKET}
     THUMBNAILS_BUCKET: ${env:THUMBNAILS_BUCKET}
     ORIGINALS_BUCKET: ${env:ORIGINALS_BUCKET}
+    HEALTH_CHECK_URL: ${env:HEALTH_CHECK_URL}
   iam:
     role:
       statements:
@@ -47,6 +48,11 @@ provider:
             - 'arn:aws:s3:::north-pole-thumbnails'
             - 'arn:aws:s3:::north-pole-original-images'
             - 'arn:aws:s3:::north-pole-images'
+        - Effect: Allow
+          Action:
+            - 'lambda:InvokeFunction'
+          Resource:
+            - 'arn:aws:lambda:eu-west-1:992648939501:function:emailMe'
 functions:
   image_processor:
     handler: on_image_update.on_image_update
@@ -63,3 +69,10 @@ functions:
     handler: on_item_delete.on_item_delete
     timeout: 30
     memorySize: 256
+  health_check:
+    handler: health.check
+    timeout: 60
+    memorySize: 128
+    events:
+      - eventBridge:
+          schedule: rate(10 minutes)
