@@ -29,6 +29,10 @@ provider:
     THUMBNAILS_BUCKET: ${env:THUMBNAILS_BUCKET}
     ORIGINALS_BUCKET: ${env:ORIGINALS_BUCKET}
     HEALTH_CHECK_URL: ${env:HEALTH_CHECK_URL}
+    IMAGES_DISTRIBUTION: ${env:IMAGES_DISTRIBUTION}
+    THUMBNAILS_DISTRIBUTION: ${env:THUMBNAILS_DISTRIBUTION}
+    STORE_IMAGES_DISTRIBUTION: ${env:STORE_IMAGES_DISTRIBUTION}
+    LAMBDA_INVALIDATE : ${env:LAMBDA_INVALIDATE}
   iam:
     role:
       statements:
@@ -41,6 +45,7 @@ provider:
             - 'arn:aws:s3:::north-pole-thumbnails/*'
             - 'arn:aws:s3:::north-pole-original-images/*'
             - 'arn:aws:s3:::north-pole-images/*'
+            - 'arn:aws:s3:::north-pole-stores/*'
         - Effect: Allow
           Action:
             - 's3:ListBucket'
@@ -48,11 +53,12 @@ provider:
             - 'arn:aws:s3:::north-pole-thumbnails'
             - 'arn:aws:s3:::north-pole-original-images'
             - 'arn:aws:s3:::north-pole-images'
+            - 'arn:aws:s3:::north-pole-stores'
         - Effect: Allow
           Action:
             - 'lambda:InvokeFunction'
           Resource:
-            - 'arn:aws:lambda:eu-west-1:992648939501:function:emailMe'
+            - '*'
 functions:
   image_processor:
     handler: on_image_update.on_image_update
@@ -63,6 +69,39 @@ functions:
     events:
       - s3:
           bucket: north-pole-original-images
+          event: s3:ObjectCreated:*
+          existing: true
+  thumbnails_invalidator:
+    handler: invalidate_s3.on_thumbnail_update
+    timeout: 30
+    memorySize: 256
+    layers:
+      - arn:aws:lambda:${self:provider.region}:770693421928:layer:Klayers-p38-Pillow:3
+    events:
+      - s3:
+          bucket: north-pole-thumbnails
+          event: s3:ObjectCreated:*
+          existing: true
+  store_image_invalidator:
+    handler: invalidate_s3.on_store_image_update
+    timeout: 30
+    memorySize: 256
+    layers:
+      - arn:aws:lambda:${self:provider.region}:770693421928:layer:Klayers-p38-Pillow:3
+    events:
+      - s3:
+          bucket: north-pole-stores
+          event: s3:ObjectCreated:*
+          existing: true
+  image_invalidator:
+    handler: invalidate_s3.on_image_update
+    timeout: 30
+    memorySize: 256
+    layers:
+      - arn:aws:lambda:${self:provider.region}:770693421928:layer:Klayers-p38-Pillow:3
+    events:
+      - s3:
+          bucket: north-pole-images
           event: s3:ObjectCreated:*
           existing: true
   item_cleaner:
